@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="UTF-8">
+    <title>excel2table</title>
+    <meta content="使用sheetjs读取和导出excel示例" name="description">
+    <style type="text/css">
+        table {
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: solid 1px black;
+            padding: 5px 10px;
+        }
+
+        body {
+            text-align: justify;
+            padding: 8px;
+            margin: 8px;
+        }
+
+        .container {
+            width: available;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>JavaScript读取excel列生成Html代码中的table By js-xlsx</h1>
+    <div>
+        <a href="https://sheetjs.com/demos">官网演示</a><br>
+        <a href="https://github.com/SheetJS/js-xlsx/">Github</a>
+    </div>
+    <h2>加载excel</h2>
+    <div class="main">
+        <p>列数：<input id="rownum" value="1"/> 类名：<input id="classname" value=""/> 自定义项: <input id="diy" value=""/></p>
+        <input accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" id="file" style="display:none;"
+               type="file"/>
+        <button onclick="selectFile()">加载本地excel文件</button>
+        <button onclick="copy1()">
+            一键复制
+        </button>
+
+    </div>
+
+    <p>结果输出</p>
+    <div style="display:inline">
+        <div id="result"></div>
+        <div><textarea cols="120" id="htmlcode" rows="60"></textarea></div>
+    </div>
+
+
+</div>
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js" type="text/javascript"></script>
+<script src="https://unpkg.com/xlsx@0.15.2/dist/xlsx.full.min.js" type="text/javascript"></script>
+<script type="text/javascript">
+
+    $(function () {
+        document.getElementById('file').addEventListener('change', function (e) {
+            var files = e.target.files;
+            if (files.length == 0) return;
+            var f = files[0];
+            if (!/\.xlsx$/g.test(f.name)) {
+                alert('仅支持读取xlsx格式！');
+                return;
+            }
+            readWorkbookFromLocalFile(f, function (workbook) {
+                readWorkbook(workbook);
+            });
+        });
+    });
+
+    function selectFile() {
+        document.getElementById('file').click();
+    }
+
+    // 读取本地excel文件
+    function readWorkbookFromLocalFile(file, callback) {
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            var data = e.target.result;
+            var workbook = XLSX.read(data, {type: 'binary'});
+            if (callback) callback(workbook);
+        };
+        reader.readAsBinaryString(file);
+    }
+
+    function readWorkbook(workbook) {
+        var sheetNames = workbook.SheetNames; // 工作表名称集合
+        var worksheet = workbook.Sheets[sheetNames[0]]; // 这里我们只读取第一张sheet
+        var csv = XLSX.utils.sheet_to_csv(worksheet);
+        document.getElementById('result').innerHTML = csv2table(csv);
+        var str = document.getElementById('result').innerHTML;
+        document.getElementById('htmlcode').innerText = str;
+    }
+
+    // 将csv转换成表格
+    function csv2table(csv) {
+        var html = '<table>';
+        var rows = fixarr(csv.split('\n'));
+        rows.pop(); // 最后一行没用的
+        var rownum = Number($('#rownum').val());
+        var classname = $('#classname').val();
+        var diy = $('#diy').val();
+        var iterations = Math.ceil(rows.length / rownum);
+        //N列 行数为ceil(总长度/N)
+        for (var j = 0; j < iterations; j++) {
+            html += '<tr>';
+            for (var k = j * rownum ? j * rownum : 0; k < (j + 1) * rownum; k++) {
+                if (k === rows.length) break;
+                var columns = rows[k].split(',');
+                html += '<td>' + columns[1] + '</td>';
+                if (classname || diy) {
+                    html += '<td><input class="' + classname + '" id="' + columns[0] + '"' + diy + '/></td>';
+                } else html += '<td><input id="' + columns[0] + '" /></td>';
+            }
+            html += '</tr>';
+        }
+        html += '</table>';
+        return html;
+    }
+
+    function fixarr(arr) {
+        var arr_tar = [];
+        for (var i = 0; i < arr.length; i++) {
+            if (arr[i] === ",") {
+
+            } else {
+                arr_tar.push(arr[i])
+            }
+        }
+        return arr_tar;
+    }
+
+    function copy1() {
+        document.getElementById('htmlcode').select();
+        document.execCommand("copy"); // 执行浏览器复制命令
+        alert("复制成功");
+    }
+
+</script>
+</body>
+</html>

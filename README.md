@@ -1,0 +1,3 @@
+# xlsx2table
+导入本地xlsx文件，转换为简单的HTML的table表单的工具
+默认sheet1的A列为input的id,B列为页面展示的字段
